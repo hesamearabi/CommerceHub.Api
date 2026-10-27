@@ -12,8 +12,8 @@ public class CreateProductRequestDto
     [Range(1, long.MaxValue, ErrorMessage = "قیمت محصول الزامی می باشد")]
     public long Price { get; set; }
 
-    public bool IsAvailable { get; set; }
+    public bool IsAvailable { get; set; } = false;
 
-
+    public List<IFormFile>? Images { get; set; } = null!;
 
 }
