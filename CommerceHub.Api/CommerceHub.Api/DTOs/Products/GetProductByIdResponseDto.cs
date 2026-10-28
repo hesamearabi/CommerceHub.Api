@@ -14,16 +14,7 @@ public class GetProductByIdResponseDto
     public List<ProductImageResponseDto> Images { get; set; } = [];
 
 }
-public class ProductImageResponseDto
-{
-    public int Id { get; set; }
-    public bool IsMain { get; set; }
-    public string Url { get; set; } = null!;
 
-
-
-
-}
 
 
 

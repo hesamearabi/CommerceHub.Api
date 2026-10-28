@@ -75,7 +75,7 @@ public class ProductsController(ApplicationDbContext context,
 
     public async Task<ActionResult> GetById(int id)
     {
-        var product = context.Products
+        var product = await context.Products
             .Where(x => x.Id == id)
             .Select(p => new GetProductByIdResponseDto
             {
@@ -97,17 +97,31 @@ public class ProductsController(ApplicationDbContext context,
             return NotFound(AppMessages.NotFoundMessage);
         }
 
-
-
-
-
-
-
         return Ok();
     }
+    [HttpGet]
+    public async Task<ActionResult> Get()
+    {
+        var products = await context
+            .Products
+            .Select(p => new GetProductResponseDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                CategoryId = p.CategoryId,
+                CategoryName = p.Category.Name,
+                Images = p.Images.Select(i => new ProductImageResponseDto
+                {
+                    Id = i.Id,
+                    IsMain = i.IsMain,
+                    Url = i.Url
+                }).ToList()
+            })
+            .ToListAsync();
 
-
-
+        return Ok(products);
+    }
 
 
 
