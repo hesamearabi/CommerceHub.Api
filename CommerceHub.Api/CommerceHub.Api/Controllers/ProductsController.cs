@@ -1,4 +1,5 @@
-﻿using CommerceHub.Api.Data;
+﻿using CommerceHub.Api.Constants;
+using CommerceHub.Api.Data;
 using CommerceHub.Api.DTOs.Products;
 using CommerceHub.Api.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -70,6 +71,31 @@ public class ProductsController(ApplicationDbContext context,
         return Ok("محصول با موفقیت اضافه شد");
     }
 
+    [HttpGet("{id}")]
+
+    public async Task<ActionResult> GetById(int id)
+    {
+        var product = context.Products
+            .Where(x => x.Id == id)
+            .Select(p => new GetProductByIdResponseDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                CategoryId = p.CategoryId,
+                CategoryName = p.Category.Name,
+                Images = p.Images.Select(p => new ProductImageResponseDto
+                {
+                    Id = p.Id,
+                    IsMain = p.IsMain,
+                    Url = p.Url
+                }).ToList()
+
+            }).FirstOrDefaultAsync();
+        if (product == null)
+        {
+            return NotFound(AppMessages.NotFoundMessage);
+        }
 
 
 
@@ -77,17 +103,8 @@ public class ProductsController(ApplicationDbContext context,
 
 
 
-
-
-
-
-
-
-
-}
-
-
-
+        return Ok();
+    }
 
 
 
