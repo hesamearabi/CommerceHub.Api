@@ -123,7 +123,115 @@ public class ProductsController(ApplicationDbContext context,
         return Ok(products);
     }
 
+    [HttpPut("{id}")]
+    public async Task<ActionResult> Update([FromRoute] int id, [FromForm] UpdateProductRequestDto request)
+    {
+        if (id != request.Id)
+        {
+            return BadRequest("شناسه بدنه درخواست با شناسه آدرس مطابقت ندارد");
+        }
+        var product = await context
+            .Products
+            .Include(x => x.Images)
+            .FirstOrDefaultAsync(x => x.Id == id);
+        if (product == null)
+        {
+            return NotFound(AppMessages.NotFoundMessage);
+        }
 
+        product.Name = request.Name;
+        product.Price = request.Price;
+        product.CategoryId = request.CategoryId;
+        product.IsAvailable = request.IsAvailable;
+
+
+        var forRemoveImageNames = new List<string>();
+        if (request.RemovedImagesIds != null &&
+            request.RemovedImagesIds.Any())
+        {
+            var forRemoveImages = product
+                .Images
+                .Where(x => request.RemovedImagesIds.Contains(x.Id))
+                .ToList();
+
+            if (forRemoveImages.Count != request.RemovedImagesIds.Count)
+            {
+                return BadRequest("شناسه ارسالی تصاویر جهت حذف معتبر نمی باشد");
+            }
+
+            context.ProductImages.RemoveRange(forRemoveImages);
+            forRemoveImageNames.AddRange(forRemoveImages.Select(x => x.Url));
+
+            #region Upload Images
+            if (request.Images != null && request.Images.Any())
+            {
+                var uploadFolder = Path.Combine(environment.WebRootPath, "Products");
+                if (!Directory.Exists(uploadFolder))
+                {
+                    Directory.CreateDirectory(uploadFolder);
+                }
+                foreach (var image in request.Images)
+                {
+                    var fileName = $"{Guid.NewGuid()}{Path.GetExtension(image.FileName)}";
+                    var filePath = Path.Combine(uploadFolder, fileName);
+                    await using var stream = new FileStream(filePath, FileMode.Create);
+                    await image.CopyToAsync(stream);
+
+                    product.Images.Add(new ProductImage
+                    {
+                        Url = $"Products/{filePath}"
+                    });
+
+                }
+                await context.SaveChangesAsync();
+
+                if (forRemoveImages.Any())
+                {
+                    foreach(var url in forRemoveImageNames)
+                    {
+                        var normalizeName = url.Replace('/', Path.DirectorySeparatorChar);
+                        var imagePath = Path.Combine(uploadFolder, normalizeName);
+
+                        if (System.IO.File.Exists(imagePath))
+                        {
+                            System.IO.File.Delete(imagePath);
+                        }
+
+                    }
+                    #endregion FileUpload
+                    return Ok();
+
+
+                }
+
+
+
+
+
+
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        return Created();
+    }
 
 
 
